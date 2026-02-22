@@ -199,6 +199,12 @@
                 <h3>Total Waitlist Signups</h3>
                 <p class="stat-value" id="totalLeads">-</p>
             </div>
+            <div class="stat-card" id="emqCard">
+                <h3>FB Event Match Quality</h3>
+                <p class="stat-value" id="fbEmqScore">--</p>
+                <p style="margin:0; font-size:0.85rem; color:#6B7C93; margin-top:0.5rem;" id="fbEmqDetails">CAPI Score
+                    (0-10)</p>
+            </div>
             <!-- Dynamic A/B stats will be injected here -->
         </div>
 
@@ -263,6 +269,25 @@
 
                 // 1. Update Total Leads
                 document.getElementById('totalLeads').textContent = data.totalLeads;
+
+                // Fetch FB Quality Score
+                fetch('/api/fb-quality')
+                    .then(res => res.json())
+                    .then(fbData => {
+                        if (fbData && fbData.data && fbData.data.length > 0 && fbData.data[0].web) {
+                            const webEvents = fbData.data[0].web;
+                            const leadEvent = webEvents.find(e => e.event_name === 'Lead');
+                            if (leadEvent && leadEvent.event_match_quality) {
+                                document.getElementById('fbEmqScore').textContent = leadEvent.event_match_quality.match_quality_score || '--';
+                                document.getElementById('fbEmqDetails').textContent = `Out of 10. ACR: ${leadEvent.event_potential_aly_acr_increase ? leadEvent.event_potential_aly_acr_increase.acr_score : '--'}`;
+                            } else {
+                                document.getElementById('fbEmqDetails').textContent = 'Waiting for FB Lead data...';
+                            }
+                        } else {
+                            document.getElementById('fbEmqDetails').textContent = 'No event match quality data yet.';
+                        }
+                    })
+                    .catch(err => console.error('Error fetching FB Quality:', err));
 
                 // 2. Update A/B Cards
                 const statsGrid = document.getElementById('statsGrid');

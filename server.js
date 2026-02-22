@@ -2,8 +2,14 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
 const path = require('path');
+const crypto = require('crypto');
+
+const FB_ACCESS_TOKEN = 'EAAKFjuYPZAPABQZCSbu4X02sOpArPgfE5fl65yjxFU4tLNCbPOVBj9n3nqyOXE2rEdFZBPucUMcvzXnYmOa8AWKRer3VMhKbJ0PsS3qDMyU0fRASaQJ22VxBAYagZA47DgZBAZBcBdxJKi3ZCYLNy1LRlTFFHRBD0wMCaZAcOZA6lcc7nZA8aUieZCcUWug1cyqtAZDZD';
+const FB_DATASET_ID = '2076938176424726';
+const FB_API_VERSION = 'v25.0';
 
 const app = express();
+app.set('trust proxy', true);
 const PORT = process.env.PORT || 3000;
 
 // Middleware
@@ -64,6 +70,39 @@ app.post('/api/waitlist', (req, res) => {
             message: 'Successfully added to waitlist',
             leadId: this.lastID
         });
+
+        // --- Send Event to Facebook Conversions API ---
+        try {
+            // Hash the email for privacy (SHA-256) per FB requirements
+            const hashedEmail = crypto.createHash('sha256').update(email.trim().toLowerCase()).digest('hex');
+
+            const eventPayload = {
+                data: [
+                    {
+                        event_name: "Lead",
+                        event_time: Math.floor(Date.now() / 1000),
+                        action_source: "website",
+                        user_data: {
+                            em: [hashedEmail],
+                            client_ip_address: req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+                            client_user_agent: req.headers['user-agent']
+                        }
+                    }
+                ]
+            };
+
+            fetch(`https://graph.facebook.com/${FB_API_VERSION}/${FB_DATASET_ID}/events?access_token=${FB_ACCESS_TOKEN}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(eventPayload)
+            })
+                .then(fbRes => fbRes.json())
+                .then(fbData => console.log('FB Conversions API Response:', fbData))
+                .catch(fbErr => console.error('FB Conversions API Error:', fbErr));
+
+        } catch (e) {
+            console.error('Failed to prepare FB Event:', e);
+        }
     });
 });
 
@@ -96,6 +135,19 @@ app.get('/api/stats', (req, res) => {
             res.json(stats);
         });
     });
+});
+
+// 3. Get Facebook Dataset Quality
+app.get('/api/fb-quality', async (req, res) => {
+    try {
+        const fbUrl = `https://graph.facebook.com/${FB_API_VERSION}/dataset_quality?dataset_id=${FB_DATASET_ID}&access_token=${FB_ACCESS_TOKEN}&fields=web`;
+        const response = await fetch(fbUrl);
+        const data = await response.json();
+        res.json(data);
+    } catch (err) {
+        console.error('FB Quality API Error:', err);
+        res.status(500).json({ error: 'Failed to fetch FB Quality data' });
+    }
 });
 
 // --- ROUTES ---
