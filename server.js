@@ -51,14 +51,14 @@ const db = new sqlite3.Database('./waitlist.db', (err) => {
 
 // 1. Submit a new lead (Waitlist Signup)
 app.post('/api/waitlist', (req, res) => {
-    const { name, email, dates, message, ab_headline_variant } = req.body;
+    const { name, email, ab_headline_variant } = req.body;
 
     if (!name || !email) {
         return res.status(400).json({ error: 'Name and email are required.' });
     }
 
     const sql = `INSERT INTO leads (name, email, dates_away, message, ab_variant) VALUES (?, ?, ?, ?, ?)`;
-    const params = [name, email, dates, message, ab_headline_variant || 'Unknown'];
+    const params = [name, email, '', '', ab_headline_variant || 'Unknown'];
 
     db.run(sql, params, function (err) {
         if (err) {
