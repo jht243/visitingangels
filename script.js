@@ -33,7 +33,15 @@ document.addEventListener('DOMContentLoaded', () => {
         animateOnScroll.observe(el);
     });
 
-    // Form Submission Mock
+    // --- Feature: FB Test Event Code Integration ---
+    // Automatically pull 'test_event_code' from the URL (e.g. ?test_event_code=TEST64477)
+    const urlParams = new URLSearchParams(window.location.search);
+    const fbTestCodeFromUrl = urlParams.get('test_event_code');
+    if (fbTestCodeFromUrl) {
+        document.getElementById('fbTestCode').value = fbTestCodeFromUrl;
+    }
+
+    // Form Submission
     const contactForm = document.getElementById('contactForm');
     const formSuccess = document.getElementById('formSuccess');
     const submitBtn = document.getElementById('submitBtn');

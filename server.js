@@ -91,6 +91,11 @@ app.post('/api/waitlist', (req, res) => {
                 ]
             };
 
+            // Support FB Test Events if a test code is passed
+            if (req.body.fb_test_code) {
+                eventPayload.test_event_code = req.body.fb_test_code;
+            }
+
             fetch(`https://graph.facebook.com/${FB_API_VERSION}/${FB_DATASET_ID}/events?access_token=${FB_ACCESS_TOKEN}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
