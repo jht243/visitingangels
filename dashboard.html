@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard | Home Watch Angels</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0A2540;
+            --secondary: #43B97F;
+            --bg: #F6F9FC;
+            --card-bg: #FFFFFF;
+            --text-main: #32325D;
+            --text-muted: #6B7C93;
+            --border: #E2E8F0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
+        }
+
+        .header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .header a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .header a:hover {
+            opacity: 1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(50, 50, 93, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border);
+        }
+
+        .stat-card h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 0;
+        }
+
+        .stat-card.highlight .stat-value {
+            color: var(--secondary);
+        }
+
+        /* Table Styles */
+        .table-container {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(50, 50, 93, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            margin-bottom: 3rem;
+        }
+
+        .table-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th,
+        td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background-color: #F8FAFC;
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            font-size: 0.95rem;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background-color: #E2E8F0;
+            color: var(--text-main);
+        }
+
+        /* Variant specific badges */
+        .badge.variant-a {
+            background-color: #DBEAFE;
+            color: #1E40AF;
+        }
+
+        .badge.variant-b {
+            background-color: #D1FAE5;
+            color: #065F46;
+        }
+
+        .badge.variant-c {
+            background-color: #FEF3C7;
+            color: #92400E;
+        }
+
+        .date-cell {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="header">
+        <h1>Analytics Dashboard</h1>
+        <a href="/">← View Landing Page</a>
+    </header>
+
+    <div class="container">
+        <!-- Dashboard Summary -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card highlight">
+                <h3>Total Waitlist Signups</h3>
+                <p class="stat-value" id="totalLeads">-</p>
+            </div>
+            <!-- Dynamic A/B stats will be injected here -->
+        </div>
+
+        <!-- Leads Table -->
+        <div class="table-container">
+            <div class="table-header">
+                <h2>Recent Leads</h2>
+                <button onclick="fetchDashboardData()"
+                    style="padding: 0.5rem 1rem; cursor:pointer; border-radius:6px; border:1px solid #ccc; background: white;">Refresh
+                    Data</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>A/B Variant Seen</th>
+                        <th>Dates Away / Message</th>
+                    </tr>
+                </thead>
+                <tbody id="leadsTableBody">
+                    <tr>
+                        <td colspan="5" class="loading">Loading data...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Array matching the ones defined in script.js for color coding
+        const headlineVariations = [
+            "Peace of Mind While You're Away.", // Control (A)
+            "Don't Let a $50 Leak Cost You $50,000.", // Financial focus (B)
+            "Your Florida Home, Watched By Professionals." // Trust focus (C)
+        ];
+
+        function getVariantBadgeClass(variant) {
+            if (variant === headlineVariations[0]) return 'badge variant-a';
+            if (variant === headlineVariations[1]) return 'badge variant-b';
+            if (variant === headlineVariations[2]) return 'badge variant-c';
+            return 'badge';
+        }
+
+        function getVariantShortName(variant) {
+            if (variant === headlineVariations[0]) return 'Control (Peace of Mind)';
+            if (variant === headlineVariations[1]) return 'Variant B ($50 Leak)';
+            if (variant === headlineVariations[2]) return 'Variant C (Professionals)';
+            return variant || 'Unknown';
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        async function fetchDashboardData() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+
+                // 1. Update Total Leads
+                document.getElementById('totalLeads').textContent = data.totalLeads;
+
+                // 2. Update A/B Cards
+                const statsGrid = document.getElementById('statsGrid');
+                // clear existing dynamic cards
+                const dynamicCards = statsGrid.querySelectorAll('.dynamic-ab-card');
+                dynamicCards.forEach(card => card.remove());
+
+                // Create cards for each variant found in DB
+                for (const [key, value] of Object.entries(data.variants)) {
+                    if (key !== 'Unknown') {
+                        const card = document.createElement('div');
+                        card.className = 'stat-card dynamic-ab-card';
+
+                        let shortName = getVariantShortName(key);
+                        let percentage = data.totalLeads > 0 ? Math.round((value / data.totalLeads) * 100) : 0;
+
+                        card.innerHTML = `
+                            <h3>${shortName}</h3>
+                            <p class="stat-value">${value}</p>
+                            <p style="margin:0; font-size:0.85rem; color:#6B7C93; margin-top:0.5rem;">${percentage}% of total conversions</p>
+                        `;
+                        statsGrid.appendChild(card);
+                    }
+                }
+
+                // 3. Update Leads Table
+                const tbody = document.getElementById('leadsTableBody');
+                tbody.innerHTML = ''; // clear loading
+
+                if (data.recentLeads.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 2rem; color: #6B7C93;">No leads yet. Share your page to start collecting!</td></tr>';
+                    return;
+                }
+
+                data.recentLeads.forEach(lead => {
+                    const tr = document.createElement('tr');
+
+                    const badgeClass = getVariantBadgeClass(lead.ab_variant);
+                    const shortName = getVariantShortName(lead.ab_variant);
+
+                    tr.innerHTML = `
+                        <td class="date-cell">${formatDate(lead.created_at)}</td>
+                        <td><strong>${lead.name}</strong></td>
+                        <td><a href="mailto:${lead.email}" style="color: #2A5A8C;">${lead.email}</a></td>
+                        <td><span class="${badgeClass}" title="${lead.ab_variant}">${shortName}</span></td>
+                        <td>
+                            <div style="font-size:0.85rem; color:#6B7C93; margin-bottom:4px;"><b>Away:</b> ${lead.dates_away || 'N/A'}</div>
+                            <div style="font-size:0.9rem;">${lead.message || 'No message'}</div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+            } catch (error) {
+                console.error("Failed to fetch dashboard data:", error);
+                document.getElementById('leadsTableBody').innerHTML = '<tr><td colspan="5" style="color:red; text-align:center;">Error loading data. Is the server running?</td></tr>';
+            }
+        }
+
+        // Fetch on load
+        fetchDashboardData();
+    </script>
+</body>
+
+</html>
