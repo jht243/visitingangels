@@ -44,6 +44,25 @@ const db = new sqlite3.Database('./waitlist.db', (err) => {
                 console.log("Leads table ready.");
             }
         });
+
+        // Create the page_views table to track every visitor
+        db.run(`CREATE TABLE IF NOT EXISTS page_views (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ip_address TEXT,
+            user_agent TEXT,
+            referrer TEXT,
+            utm_source TEXT,
+            utm_medium TEXT,
+            utm_campaign TEXT,
+            page_url TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`, (err) => {
+            if (err) {
+                console.error("Error creating page_views table", err.message);
+            } else {
+                console.log("Page views table ready.");
+            }
+        });
     }
 });
 
@@ -111,12 +130,32 @@ app.post('/api/waitlist', (req, res) => {
     });
 });
 
+// 4. Track Page Views
+app.post('/api/pageview', (req, res) => {
+    const ip = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    const userAgent = req.headers['user-agent'] || '';
+    const { referrer, utm_source, utm_medium, utm_campaign, page_url } = req.body;
+
+    const sql = `INSERT INTO page_views (ip_address, user_agent, referrer, utm_source, utm_medium, utm_campaign, page_url) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+    const params = [ip, userAgent, referrer || '', utm_source || '', utm_medium || '', utm_campaign || '', page_url || ''];
+
+    db.run(sql, params, function (err) {
+        if (err) {
+            console.error('Page view tracking error:', err.message);
+            return res.status(500).json({ error: 'Failed to track page view.' });
+        }
+        res.status(201).json({ success: true, viewId: this.lastID });
+    });
+});
+
 // 2. Get Analytics Data (for the Dashboard)
 app.get('/api/stats', (req, res) => {
     const stats = {
         totalLeads: 0,
+        totalPageViews: 0,
         variants: {},
-        recentLeads: []
+        recentLeads: [],
+        recentPageViews: []
     };
 
     // Get total count and ab_variant breakdown
@@ -137,7 +176,21 @@ app.get('/api/stats', (req, res) => {
             }
             stats.recentLeads = leadRows;
 
-            res.json(stats);
+            // Get page view count and recent page views
+            db.get(`SELECT COUNT(*) as count FROM page_views`, [], (err, pvCount) => {
+                if (err) {
+                    return res.status(500).json({ error: err.message });
+                }
+                stats.totalPageViews = pvCount ? pvCount.count : 0;
+
+                db.all(`SELECT id, ip_address, user_agent, referrer, utm_source, utm_campaign, page_url, created_at FROM page_views ORDER BY created_at DESC LIMIT 50`, [], (err, pvRows) => {
+                    if (err) {
+                        return res.status(500).json({ error: err.message });
+                    }
+                    stats.recentPageViews = pvRows;
+                    res.json(stats);
+                });
+            });
         });
     });
 });

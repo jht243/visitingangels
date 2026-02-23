@@ -1,5 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    // --- Track Page View ---
+    const urlParams = new URLSearchParams(window.location.search);
+    fetch('/api/pageview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            referrer: document.referrer || '',
+            utm_source: urlParams.get('utm_source') || '',
+            utm_medium: urlParams.get('utm_medium') || '',
+            utm_campaign: urlParams.get('utm_campaign') || '',
+            page_url: window.location.href
+        })
+    }).catch(() => { }); // Silent fail — don't block user experience
+
     // Navbar scroll effect
     const navbar = document.querySelector('.navbar');
     window.addEventListener('scroll', () => {
@@ -35,7 +49,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Feature: FB Test Event Code Integration ---
     // Automatically pull 'test_event_code' from the URL (e.g. ?test_event_code=TEST64477)
-    const urlParams = new URLSearchParams(window.location.search);
     const fbTestCodeFromUrl = urlParams.get('test_event_code');
     if (fbTestCodeFromUrl) {
         document.getElementById('fbTestCode').value = fbTestCodeFromUrl;
